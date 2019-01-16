@@ -1,0 +1,509 @@
+#+TITLE: Emacs Config
+#+AUTHOR: Ross Fenning
+#+EMAIL: emacs@rossfenning.co.uk
+#+STARTUP: indent hidestars
+
+* User Details
+
+Tell emacs who you are
+
+#+BEGIN_SRC emacs-lisp
+  (setq user-full-name "Ross Fenning"
+        user-mail-address "emacs@rossfenning.co.uk")
+#+END_SRC
+
+#+RESULTS:
+: emacs@rossfenning.co.uk
+
+
+* Startup
+
+This package does a nice job ensuring the =PATH= variable is synced
+up.  OSX is the only OS that misbehaves, but here it is nonetheless.
+
+** Path
+
+#+BEGIN_SRC emacs-lisp
+  (use-package exec-path-from-shell
+    :ensure t
+    :config (exec-path-from-shell-initialize))
+#+END_SRC
+
+** Scratch
+
+The slash screen displayed on startup is a little too noisy for me.
+The =*scratch*= buffer is a lot more low key.
+
+#+BEGIN_SRC emacs-lisp
+  (setq inhibit-startup-message 't)
+#+END_SRC
+* Interface
+
+** Better Defaults
+   
+Emacs comes with some obnixious defaults.
+
+#+BEGIN_SRC emacs-lisp
+  (setq backup-inhibited t
+	auto-save-default 0
+	indent-tabs-mode nil)
+#+END_SRC
+
+** Better Look
+
+Remove the scrollbar, tool bar, and menu bar.
+
+#+BEGIN_SRC emacs-lisp
+  (defun recker/emacs-startup-hook ()
+    (menu-bar-mode 0)
+    (tool-bar-mode 0)
+    (toggle-scroll-bar 0))
+  (add-hook 'emacs-startup-hook 'recker/emacs-startup-hook)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(when (window-system)
+  (set-frame-font "Fira Code Light"))
+(let ((alist '((33 . ".\\(?:\\(?:==\\|!!\\)\\|[!=]\\)")
+               (35 . ".\\(?:###\\|##\\|_(\\|[#(?[_{]\\)")
+               (36 . ".\\(?:>\\)")
+               (37 . ".\\(?:\\(?:%%\\)\\|%\\)")
+               (38 . ".\\(?:\\(?:&&\\)\\|&\\)")
+               (42 . ".\\(?:\\(?:\\*\\*/\\)\\|\\(?:\\*[*/]\\)\\|[*/>]\\)")
+               (43 . ".\\(?:\\(?:\\+\\+\\)\\|[+>]\\)")
+               (45 . ".\\(?:\\(?:-[>-]\\|<<\\|>>\\)\\|[<>}~-]\\)")
+               ;;(46 . ".\\(?:\\(?:\\.[.<]\\)\\|[.=-]\\)")
+               (47 . ".\\(?:\\(?:\\*\\*\\|//\\|==\\)\\|[*/=>]\\)")
+               (48 . ".\\(?:x[a-zA-Z]\\)")
+               (58 . ".\\(?:::\\|[:=]\\)")
+               (59 . ".\\(?:;;\\|;\\)")
+               (60 . ".\\(?:\\(?:!--\\)\\|\\(?:~~\\|->\\|\\$>\\|\\*>\\|\\+>\\|--\\|<[<=-]\\|=[<=>]\\||>\\)\\|[*$+~/<=>|-]\\)")
+               (61 . ".\\(?:\\(?:/=\\|:=\\|<<\\|=[=>]\\|>>\\)\\|[<=>~]\\)")
+               (62 . ".\\(?:\\(?:=>\\|>[=>-]\\)\\|[=>-]\\)")
+               (63 . ".\\(?:\\(\\?\\?\\)\\|[:=?]\\)")
+               (91 . ".\\(?:]\\)")
+               (92 . ".\\(?:\\(?:\\\\\\\\\\)\\|\\\\\\)")
+               (94 . ".\\(?:=\\)")
+               (119 . ".\\(?:ww\\)")
+               (123 . ".\\(?:-\\)")
+               (124 . ".\\(?:\\(?:|[=|]\\)\\|[=>|]\\)")
+               (126 . ".\\(?:~>\\|~~\\|[>=@~-]\\)")
+               )
+             ))
+  (dolist (char-regexp alist)
+    (set-char-table-range composition-function-table (car char-regexp)
+                          `([,(cdr char-regexp) 0 font-shape-gstring]))))
+#+END_SRC
+
+Load a good theme.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package zenburn-theme
+    :ensure t
+    :init (load-theme 'zenburn t))
+#+END_SRC
+
+** Better Comments
+
+I overwrite the build-in =comment-dwim= with its superior sequel.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package comment-dwim-2
+    :ensure t
+    :bind ("M-;" . comment-dwim-2))
+#+END_SRC
+
+** Better Modeline
+
+#+BEGIN_SRC emacs-lisp
+  (use-package rich-minority
+    :ensure t
+    :init (rich-minority-mode 1)
+    :config (setq rm-blacklist ""))
+#+END_SRC
+
+** Better Text Selection
+
+I use =expand-region= to incrementally grab larger portions of text
+based on where the cursor is.  It's a brilliant tool.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package expand-region
+    :ensure t
+    :bind ("C-=" . er/expand-region))
+#+END_SRC
+
+Also, if text is entered while text is highlighted, it should
+overwrite it.
+
+#+BEGIN_SRC emacs-lisp
+  (delete-selection-mode t)
+#+END_SRC
+
+** Better Git
+
+Magit.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package magit
+    :ensure t
+    :bind ("C-x g" . magit-status))
+#+END_SRC
+
+** Better Completion
+
+Completion and filtering with ivy, supported by counsel.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package ivy
+    :ensure t
+    :config
+    (ivy-mode 1))
+
+  (use-package counsel
+    :ensure t
+    :bind
+    ("C-c i" . counsel-imenu)
+    ("C-c s" . swiper))
+#+END_SRC
+
+And actual auto-complete.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package auto-complete
+    :ensure t
+    :init (ac-config-default)) 
+#+END_SRC
+
+Who knew this was an actual built-in function?
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-c f") 'project-find-file)
+#+END_SRC
+
+* Modes
+
+These are the settings for various editing modes - the top level being
+"text-mode", which is for /editing text written for humans to read/.
+
+Inferior modes should disable these at when it makes sense to.
+
+#+BEGIN_SRC emacs-lisp
+  (defun recker/text-mode-hook ()
+    (auto-fill-mode 1)
+    (flyspell-mode 1)
+    (flymake-mode-off))
+  (add-hook 'text-mode-hook 'recker/text-mode-hook)
+#+END_SRC
+
+Since I find myself alphabetizing text files often, I like to bind
+=sort-lines= to something convenient.
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-c l") 'sort-lines)
+#+END_SRC
+
+Flycheck mode.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package flycheck
+    :ensure t
+    :init
+    (global-flycheck-mode))
+#+END_SRC
+
+Globally cleanup white space on save.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package whitespace-cleanup-mode
+    :ensure t
+    :config (global-whitespace-cleanup-mode))
+#+END_SRC
+
+** JavaScript
+
+This is the web-scale portion of my config.
+
+#+BEGIN_SRC emacs-lisp
+  (setq js-indent-level 2)
+#+END_SRC
+
+** Ruby
+   
+These are very much a work in progress.  I know about as much about
+ruby as I know about scented candles and professional football.
+
+#+BEGIN_SRC emacs-lisp
+  (setq ruby-deep-indent-paren nil)
+#+END_SRC
+
+** Terminal
+
+I'm a simple man, and I use a simple shell.
+
+#+BEGIN_SRC emacs-lisp
+  (defun recker/ansi-term ()
+    (interactive)
+    (ansi-term "/bin/bash"))
+  (global-set-key (kbd "C-c e") 'eshell)
+  (global-set-key (kbd "C-x t") 'recker/ansi-term)
+#+END_SRC
+
+The terminal buffer should be killed on exit.
+   
+#+BEGIN_SRC emacs-lisp
+  (defadvice term-handle-exit
+      (after term-kill-buffer-on-exit activate)
+    (kill-buffer))
+#+END_SRC
+
+** YAML
+
+YAML is so hip and cool.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package flymake-yaml
+    :ensure t)
+
+  (use-package indent-guide
+    :ensure t)
+
+  (use-package yaml-mode
+    :ensure t
+    :mode ("\\.yml\\'" "\\.sls\\'")
+    :init
+    (add-hook 'yaml-mode-hook 'turn-off-auto-fill)
+    (add-hook 'yaml-mode-hook 'flymake-yaml-load)
+    (add-hook 'yaml-mode-hook 'indent-guide-mode))
+#+END_SRC
+
+** DocView
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'doc-view-mode-hook 'auto-revert-mode)
+#+END_SRC
+
+* Org
+
+Org is love.  Org is life.
+
+** General
+
+#+BEGIN_SRC emacs-lisp
+  (use-package "org"
+    :ensure t
+    :pin "org"
+    :init (add-hook 'org-mode-hook 'org-indent-mode)
+    :config (org-babel-do-load-languages
+             'org-babel-load-languages
+             '((python . t)
+               (lisp . t)
+               (ditaa . t)
+               (ruby . t)
+               (sh . t)
+               (java . t)
+               (js . t)
+               (C . t)))
+    :bind (("C-c a" . org-agenda)
+           ("C-c c" . org-capture)))
+#+END_SRC
+
+
+* Gnus
+
+Gnus has a steep learning curve, and learning to incorporate this
+mysterious program has proven to be an emotional roller coaster. I’m
+not even sure I know enough about it to say “it’s worth it”, but
+hopefully this will help you with your own journey.
+
+** Better Folders
+
+Gnus creates a bunch of folders in your home directory that, as far as
+I can tell, are not needed outside of gnus. These settings will hide
+them all in =~/.gnus=, which will serve as our convenient nuke-point if
+things ever go south while playing around.
+
+Yes - =nnfolder-directory= is really needed. Whether this is a bug or
+not, the redundancy is intentional.
+
+#+BEGIN_SRC emacs-lisp
+  (setq gnus-home-directory "~/.gnus"
+	nnfolder-directory "~/.gnus/Mail/archive"
+	message-directory "~/.gnus/Mail")
+#+END_SRC
+
+** Better Startup
+
+Gnus requires a “primary method” from which you obtain
+news. Unfortunately, the program kind of explodes if this isn’t set,
+which proves to be kind of a pain when you want to poke around and set
+up things interactively.
+
+Here’s my workaround - set the primary method to a dummy protocol that
+will immediately come back. In our case, this is a blank nnml stream.
+
+#+BEGIN_SRC emacs-lisp
+  (setq gnus-select-method '(nnml ""))
+#+END_SRC
+
+Default on topic mode, since it’s more helpful.
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'gnus-group-mode-hook 'gnus-topic-mode)
+#+END_SRC
+
+** News
+
+Use gmane to follow news, mailers, and tons of other syndicated
+things.  There are even comics.
+
+#+BEGIN_SRC emacs-lisp
+  (setq gnus-secondary-select-methods
+	'((nntp "news.gmane.org")))
+#+END_SRC
+
+** Reading Mail
+
+Read mail from gmail.  In this configuration, I have a personal
+account and a work account.  If you have only one account, you should
+be able to pare this down.
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'gnus-secondary-select-methods
+	       '(nnimap "personal"
+			(nnimap-address "imap.gmail.com")
+			(nnimap-server-port "imaps")
+			(nnimap-stream ssl)
+			(nnmail-expiry-target "nnimap+gmail:[Gmail]/Trash")
+			(nnmail-expiry-wait immediate)))
+#+END_SRC
+
+** Composing Mail
+
+Turn on org mode, so I can make tables and lists like a fancy boy.
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'message-mode-hook 'turn-on-orgtbl)
+  (add-hook 'message-mode-hook 'turn-on-orgstruct++)
+#+END_SRC
+
+** Address Book
+
+Collect addresses in bbdb.  This will prompt for a new entry while
+sending mail.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package "bbdb"
+    :ensure t
+    :config
+    (setq bbdb-file "~/org/bbdb")
+    :init
+    (bbdb-mua-auto-update-init 'message)
+    (setq bbdb-mua-auto-update-p 'query)
+    (add-hook 'gnus-startup-hook 'bbdb-insinuate-gnus))
+#+END_SRC
+
+* Functions
+
+These are miscellaneous functions that I've written (or plagiarized).
+
+#+BEGIN_SRC emacs-lisp
+  (defun recker/purge-buffers ()
+    "Deletes all buffers except for *scratch*"
+    (interactive)
+    (let ((kill-if-not-scratch
+           (lambda (b)
+             (unless (string= (buffer-name b) "*scratch*")
+               (kill-buffer b)))))
+      (mapc kill-if-not-scratch (buffer-list))))
+
+  (defun recker/load-file-if-exists (file)
+    (let ((path (expand-file-name file)))
+      (if (file-exists-p path)
+	  (load-file path))))
+
+  (defun recker/unfill-region (beg end)
+    "Unfill the region, joining text paragraphs into a single
+              logical line.  This is useful, e.g., for use with
+              `visual-line-mode'."
+    (interactive "*r")
+    (let ((fill-column (point-max)))
+      (fill-region beg end)))
+
+  (defun recker/run-current-file ()
+    "Execute or compile the current file.
+  For example, if the current buffer is the file x.pl,
+  then it'll call “perl x.pl” in a shell.
+  The file can be php, perl, python, ruby, javascript, bash, ocaml, vb, elisp.
+  File suffix is used to determine what program to run.
+  If the file is modified, ask if you want to save first. (This command always run the saved version.)
+  If the file is emacs lisp, run the byte compiled version if exist."
+    (interactive)
+    (let (suffixMap fName fSuffix progName cmdStr)
+
+      ;; a keyed list of file suffix to comand-line program path/name
+      (setq suffixMap 
+            '(("php" . "php")
+              ;; ("coffee" . "coffee -p")
+              ("pl" . "perl")
+              ("py" . "python")
+              ("rb" . "ruby")
+              ("js" . "node")             ; node.js
+              ("sh" . "bash")
+              ("ml" . "ocaml")
+              ("vbs" . "cscript")))
+      (setq fName (buffer-file-name))
+      (setq fSuffix (file-name-extension fName))
+      (setq progName (cdr (assoc fSuffix suffixMap)))
+      (setq cmdStr (concat progName " \""   fName "\""))
+
+      (when (buffer-modified-p)
+	(progn 
+          (when (y-or-n-p "Buffer modified. Do you want to save first?")
+            (save-buffer) ) ) )
+
+      (if (string-equal fSuffix "el") ; special case for emacs lisp
+          (progn 
+            (load (file-name-sans-extension fName)))
+	(if progName
+            (progn
+              (message "Running…")
+              ;; (message progName)
+              (shell-command cmdStr "*run-current-file output*" ))
+          (message "No recognized program file suffix for this file.")))
+      ))
+
+  (defun recker/org-scratch ()
+    "Open a org mode *scratch* pad."
+    (interactive)
+    (switch-to-buffer "*org scratch*")
+    (org-mode)
+    (insert "#+TITLE: Org Scratch")
+    (newline)
+    (newline))
+#+END_SRC
+
+Likewise, miscellaneous key-bindings.
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-c b") 'browse-url)
+  (global-set-key (kbd "C-x k") 'kill-this-buffer)
+  (global-set-key (kbd "C-x C-k k") 'kill-buffer)
+  (global-set-key (kbd "C-c o") 'recker/org-scratch)
+  (global-set-key (kbd "<f8>") 'compile)
+#+END_SRC
+
+* Local
+
+For any secrets or lispy changes you are testing out for the day, I
+find it conenvient to keep those [[file:lisp/][here]].  This function loads all =.el=
+files found there.
+
+#+BEGIN_SRC emacs-lisp
+  (defun recker/load-directory (dir)
+    (let ((load-it (lambda (f)
+                     (load-file (concat (file-name-as-directory dir) f)))
+                   ))
+      (mapc load-it (directory-files dir nil "\\.el$"))))
+  (recker/load-directory "~/.emacs.d/lisp/")
+#+END_SRC
