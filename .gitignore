@@ -1,0 +1,4 @@
+README.el
+.cask
+/elpa
+*.dat

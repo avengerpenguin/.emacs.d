@@ -123,9 +123,6 @@
   (insert "#"))
 (global-set-key (kbd "M-3") '(lambda()(interactive)(insert-pound)))
 
-(require 'cask "/usr/local/share/emacs/site-lisp/cask/cask.el")
-(cask-initialize)
-
 (package-initialize)
 
 (if (eq system-type 'darwin)            ;installed with homebrew
