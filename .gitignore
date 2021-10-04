@@ -1,4 +1,6 @@
-README.el
-.cask
 /elpa
-*.dat
+/eshell
+/transient
+/projectile-bookmarks.eld
+/auto-save-list
+*.sqlite
