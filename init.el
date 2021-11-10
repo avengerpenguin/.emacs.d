@@ -165,10 +165,13 @@
 (global-set-key [f8] 'neotree-toggle)
 
 
+(add-to-list 'load-path "/usr/share/emacs/site-lisp/mu4e")
 (add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu/mu4e")
 (require 'mu4e)
 
-(setq mu4e-mu-binary "/usr/local/bin/mu")
+(if (eq system-type 'darwin)
+    (setq mu4e-mu-binary "/usr/local/bin/mu")
+  (setq mu4e-mu-binary "/usr/bin/mu"))
 (setq mu4e-get-mail-command "/usr/local/bin/offlineimap")
 (setq mu4e-contexts
       `( ,(make-mu4e-context
