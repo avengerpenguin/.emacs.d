@@ -91,7 +91,8 @@
  '(custom-safe-themes
    '("e6f3a4a582ffb5de0471c9b640a5f0212ccf258a987ba421ae2659f1eaa39b09" default))
  '(package-selected-packages
-   '(feature-mode ivy lua-mode plantuml-mode ttl-mode web-mode all-the-icons-dired all-the-icons use-package doom-themes)))
+   '(jedi graphviz-dot-mode feature-mode ivy lua-mode plantuml-mode ttl-mode web-mode all-the-icons-dired all-the-icons use-package doom-themes))
+ '(send-mail-function 'sendmail-send-it))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -148,6 +149,14 @@
 
 (use-package blacken
   :hook ((python-mode . blacken-mode)))
+(use-package jedi)
+(add-hook 'python-mode-hook 'jedi:setup)
+(setq jedi:complete-on-dot t) 
+
+(setq jedi:environment-virtualenv
+      (list "/usr/local/opt/python@3.10/bin/python3" "-m" "venv"))
+
+
 (use-package typescript-mode)
 (setq js-indent-level 2)
 
@@ -173,6 +182,10 @@
     (setq mu4e-mu-binary "/usr/local/bin/mu")
   (setq mu4e-mu-binary "/usr/bin/mu"))
 (setq mu4e-get-mail-command "/usr/local/bin/offlineimap")
+(setq message-send-mail-function 'smtpmail-send-it
+      smtpmail-debug-info t
+      smtpmail-debug-verb t)
+
 (setq mu4e-contexts
       `( ,(make-mu4e-context
            :name "Personal"
@@ -188,10 +201,9 @@
                    (mu4e-refile-folder . "/Personal/Archives")
                    (mu4e-sent-folder . "/Personal/sent-mail")
                    (mu4e-spam-folder . "/Personal/spam")
-                   (smtpmail-smtp-user "post@rossfenning.co.uk")
-                   (smtpmail-default-smtp-server "mail.rossfenning.co.uk")
-                   (smtpmail-smtp-server "mail.rossfenning.co.uk")
-                   (smtpmail-smtp-service 25)
+                   (smtpmail-smtp-user . "post@rossfenning.co.uk")
+                   (smtpmail-smtp-server . "mail.rossfenning.co.uk")
+                   (smtpmail-smtp-service . 25)
                    ))
          ,(make-mu4e-context
            :name "Work"
@@ -206,10 +218,9 @@
                    (mu4e-refile-folder . "/BBC/Archive")
                    (mu4e-sent-folder . "/Personal/Sent")
                    (mu4e-spam-folder . "/BBC/Junk")
-                   (smtpmail-smtp-user "fennir01")
-                   (smtpmail-default-smtp-server "localhost")
-                   (smtpmail-smtp-server "localhost")
-                   (smtpmail-smtp-service 1025)
+                   (smtpmail-smtp-user . "fennir01")
+                   (smtpmail-smtp-server . "localhost")
+                   (smtpmail-smtp-service . 1025)
                    ))
          ))
 (global-set-key (kbd "<f9>") 'mu4e)
