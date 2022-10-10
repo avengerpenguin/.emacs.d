@@ -90,8 +90,10 @@
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
    '("e6f3a4a582ffb5de0471c9b640a5f0212ccf258a987ba421ae2659f1eaa39b09" default))
+ '(magit-repository-directories '(("~/workspace" . 1)))
  '(package-selected-packages
-   '(jedi graphviz-dot-mode feature-mode ivy lua-mode plantuml-mode ttl-mode web-mode all-the-icons-dired all-the-icons use-package doom-themes))
+   '(todotxt-mode jedi graphviz-dot-mode feature-mode ivy lua-mode plantuml-mode ttl-mode web-mode all-the-icons-dired all-the-icons use-package doom-themes))
+ '(projectile-completion-system 'ivy)
  '(send-mail-function 'sendmail-send-it))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -178,51 +180,28 @@
 (add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu/mu4e")
 (require 'mu4e)
 
-(if (eq system-type 'darwin)
-    (setq mu4e-mu-binary "/usr/local/bin/mu")
-  (setq mu4e-mu-binary "/usr/bin/mu"))
-(setq mu4e-get-mail-command "/usr/local/bin/offlineimap")
+
+(setq mail-user-agent 'mu4e-user-agent)
+(setq mu4e-get-mail-command "/usr/bin/offlineimap")
 (setq message-send-mail-function 'smtpmail-send-it
       smtpmail-debug-info t
       smtpmail-debug-verb t)
 
-(setq mu4e-contexts
-      `( ,(make-mu4e-context
-           :name "Personal"
-           :enter-func (lambda () (mu4e-message "Entering Personal context"))
-           :leave-func (lambda () (mu4e-message "Leaving Personal context"))
-           :match-func (lambda (msg)
-                         (when msg
-                           (string-match-p "^/Personal" (mu4e-message-field msg :maildir))))
-           :vars '(
-                   (user-mail-address	    . "post@rossfenning.co.uk"  )
-                   (user-full-name	    . "Ross Fenning" )
-                   (mu4e-trash-folder . "/Personal/Trash")
-                   (mu4e-refile-folder . "/Personal/Archives")
-                   (mu4e-sent-folder . "/Personal/sent-mail")
-                   (mu4e-spam-folder . "/Personal/spam")
-                   (smtpmail-smtp-user . "post@rossfenning.co.uk")
-                   (smtpmail-smtp-server . "mail.rossfenning.co.uk")
-                   (smtpmail-smtp-service . 25)
-                   ))
-         ,(make-mu4e-context
-           :name "Work"
-           :enter-func (lambda () (mu4e-message "Switch to the BBC context"))
-           :match-func (lambda (msg)
-                         (when msg
-                           (string-match-p "^/BBC" (mu4e-message-field msg :maildir))))
-           :vars '(
-                   (user-mail-address	     . "ross.fenning@bbc.co.uk" )
-                   (user-full-name	     . "Ross Fenning" )
-                   (mu4e-trash-folder . "/BBC/Trash")
-                   (mu4e-refile-folder . "/BBC/Archive")
-                   (mu4e-sent-folder . "/Personal/Sent")
-                   (mu4e-spam-folder . "/BBC/Junk")
-                   (smtpmail-smtp-user . "fennir01")
-                   (smtpmail-smtp-server . "localhost")
-                   (smtpmail-smtp-service . 1025)
-                   ))
-         ))
+(setq
+   message-send-mail-function   'smtpmail-send-it
+   smtpmail-default-smtp-server "mail.rossfenning.co.uk"
+   smtpmail-smtp-server         "mail.rossfenning.co.uk"
+   smtpmail-local-domain        "rossfenning.co.uk"
+   smtpmail-smtp-user "post@rossfenning.co.uk"
+   smtpmail-smtp-service 25)
+
+
+(setq mu4e-sent-folder   "/sent-mail"
+      mu4e-drafts-folder "/Drafts"
+      mu4e-trash-folder  "/Deleted"
+      mu4e-refile-folder "/archive"
+      mu4e-spam-folder "/spam")
+
 (global-set-key (kbd "<f9>") 'mu4e)
 
 (add-to-list 'mu4e-marks
@@ -253,8 +232,7 @@
 
 (setq mu4e-bookmarks
       `(
-        ("maildir:/Personal/INBOX"     "Personal"             ?p)
-        ("maildir:/BBC/INBOX"          "Work"                 ?w)
+        ("maildir:/INBOX"     "Inbox"             ?i)
         ))
 
 
@@ -263,3 +241,9 @@
 (setq shr-color-visible-distance-min 5)
 (setq shr-use-colors nil)
 
+(use-package todotxt-mode)
+(require 'todotxt-mode)
+(setq todotxt-default-file (expand-file-name "~/.todo/todo.txt"))
+(add-to-list 'auto-mode-alist '("todo\\.txt\\'" . todotxt-mode))
+(define-key global-map "\C-ct" 'todotxt-add-todo)
+(define-key global-map "\C-co" 'todotxt-open-file)
